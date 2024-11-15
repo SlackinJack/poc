@@ -1,0 +1,99 @@
+{
+    "main_configuration_section": "------------------------------",
+    
+    
+    "address_desc": "address:port of the server",
+    "address": "http://localhost:8080",
+
+
+    "debug_level_desc": "output debug level: 3 >= all, 2 == debug, 1 == info, 0 <= default",
+    "debug_level": 3,
+
+
+    "delete_output_files_exit_desc": "delete all output files in 'output/' upon exiting",
+    "delete_output_files_exit": false,
+
+
+    "automatically_open_output_files_desc": "automatically open output files (images, audios)",
+    "automatically_open_files": false,
+
+
+    "always_yes_to_yn_desc": "always answer 'yes' to operations asking for confirmation (careful!)",
+    "always_yes_to_yn": false,
+    
+    
+    
+    
+    
+    "model_configuration_section": "------------------------------",
+    
+    
+    "model_scanner_ignored_filenames_desc": "list of files/folders to ignore when scanning for models",
+    "model_scanner_ignored_filenames": [
+        "assets",
+        "configs",
+        "version.txt",
+        "version_diffusers_cache.txt"
+    ],
+    
+    
+    
+    
+    
+    "behavioural_configuration_section": "------------------------------",
+    
+    
+    "enable_functions_desc": "functions - disable to strictly use chat functionality",
+    "enable_functions": false,
+
+
+    "enable_internet_desc": "internet access for functions, and to browse websites inside files",
+    "enable_internet": false,
+
+
+    "enable_automatic_model_switching_desc": "automatic model switching",
+    "enable_automatic_model_switching": false,
+
+
+    "enable_chat_history_consideration_desc": "use conversation history as part of the prompt",
+    "enable_chat_history_consideration": false,
+
+
+    "max_sources_per_search_desc": "number of sources to use when using online sources",
+    "max_sources_per_search": 3,
+
+
+    "max_sentences_per_source_desc": "number of sentences to use from each unique source",
+    "max_sentences_per_source": 25,
+    
+    
+    
+    
+    
+    "text_to_text_configuration_section": "------------------------------",
+    
+    
+    "default_text_to_text_model_desc": "default text to text model, and for model switching (or leave blank to use the first text_to_text model from models.json)",
+    "default_text_to_text_model": "text_to_text_nous-13b",
+
+
+    "system_prompt_desc": "default system prompt (or leave blank to disable system prompts)",
+    "system_prompt": "You are an conversational, engaging, informal, friendly and helpful ASSISTANT. Provide a single response to USER's latest inquiry in the conversation. Consider the previous messages in the conversation, when it is provided, and when it is relevant to the latest inquiry. You are allowed to ask USER for task clarification or other types of questions, only when it is needed.",
+
+
+    "allow_setting_text_seeds_desc": "enable to ask for seeds on text prompts (not currently supported by localai, but implemented for later use)",
+    "allow_setting_text_seeds": false,
+    
+    
+    
+    
+    
+    
+    "image_to_text_configuration_section": "------------------------------",
+    
+        
+    "default_image_to_text_model_desc": "default image to text model (or leave blank to use first image_to_text model from models.json)",
+    "default_image_to_text_model": "image_to_text_llava-13b",
+}
+
+

@@ -1,0 +1,23 @@
+{
+    "text_to_text_nous-13b": {
+        "model_type": "text_to_text",
+        "switchable": true,
+        "description": "Nous is a fast general-purpose assistant."
+    },
+    "text_to_text_magnum-34b": {
+        "model_type": "text_to_text",
+        "switchable": true,
+        "description": "Magnum is a smart general-purpose assistant, who should only be used for long and in-depth responses.",
+        "format": "chatml"
+    },
+    
+    
+    
+    
+    "image_to_text_llava-13b": {
+        "model_type": "image_to_text"
+    },
+    "image_to_text_llava-34b": {
+        "model_type": "image_to_text"
+    }
+}
