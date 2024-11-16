@@ -79,17 +79,6 @@ def loadModelConfiguration():
     return
 
 
-def setDefaultTextModel(modelNameIn):
-    global __defaultModelName
-    __defaultModelName = modelNameIn
-    return
-
-
-def resetDefaultTextModel():
-    setConfig("default_text_to_text_model", __defaultModelName)
-    return
-
-
 def setConfigurationFileName(configurationFileNameIn):
     global __configurationFileName
     __configurationFileName = configurationFileNameIn

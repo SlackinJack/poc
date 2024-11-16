@@ -5,7 +5,7 @@ import os
 from modules.file.operation import readFile, deleteFile
 from modules.util.configuration import setConfigurationFileName
 from modules.util.configuration import getConfigurationFileName
-from modules.util.configuration import loadConfiguration, setDefaultTextModel
+from modules.util.configuration import loadConfiguration
 from modules.util.configuration import loadModelConfiguration
 from modules.util.configuration import setConfig, getConfig
 from modules.util.conversation import getConversationName, setConversation
@@ -371,7 +371,6 @@ def loadConfig():
             )
         )
 
-    setDefaultTextModel(getConfig("default_text_to_text_model"))
     return
 
 

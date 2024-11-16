@@ -11,8 +11,7 @@ from modules.util.util import printDebug, printGreen
 
 
 __modelTypes = {
-    "text_to_text": "Text-to-Text",
-    "image_to_text": "Image-to-Text",
+    "image_to_text": "Image-to-Text"
 }
 
 
@@ -85,36 +84,6 @@ def getModelsWithType(modelTypeIn):
         if data["model_type"].lower() == modelTypeIn:
             out[model] = data
     return out
-
-
-def getSwitchableTextModels():
-    out = []
-    for model, data in getModelsWithType("text_to_text").items():
-        if data["switchable"]:
-            out.append(model)
-    return out
-
-
-def getSwitchableTextModelDescriptions():
-    out = ""
-    for model, data in getModelsWithType("text_to_text").items():
-        if data["switchable"]:
-            if len(out) > 0:
-                out += " "
-            out += data["description"]
-    return out
-
-
-def getChatModelFormat(modelNameIn):
-    formatting = getModelDataIfExists("format", modelNameIn)
-    if formatting is None:
-        return "normal"
-    else:
-        return formatting
-
-
-def getChatModelPromptOverride(modelNameIn):
-    return getModelDataIfExists("prompt", modelNameIn)
 
 
 def getModelDataIfExists(dataNameIn, modelNameIn):

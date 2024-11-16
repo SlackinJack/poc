@@ -28,20 +28,6 @@
     
     
     
-    "text_to_text_configuration_section": "------------------------------",
-    
-    
-    "default_text_to_text_model_desc": "default text to text model, and for model switching (or leave blank to use the first text_to_text model from models.json)",
-    "default_text_to_text_model": "text_to_text_nous-13b",
-
-
-    "system_prompt_desc": "default system prompt (or leave blank to disable system prompts)",
-    "system_prompt": "You are an conversational, engaging, informal, friendly and helpful ASSISTANT. Provide a single response to USER's latest inquiry in the conversation. Consider the previous messages in the conversation, when it is provided, and when it is relevant to the latest inquiry. You are allowed to ask USER for task clarification or other types of questions, only when it is needed.",
-    
-    
-    
-    
-    
     "image_to_text_configuration_section": "------------------------------",
     
         
