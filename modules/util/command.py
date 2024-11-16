@@ -12,7 +12,6 @@ from modules.util.conversation import getConversationName, setConversation
 from modules.util.model import getModelFromConfiguration
 from modules.util.model import getModelByNameAndType, getModelsWithType
 from modules.util.model import modelScanner, getModelTypes
-from modules.util.response import getTextToTextResponseStreamed
 from modules.util.strings.paths import CONFIGS_PATH, CONVERSATIONS_FILE_PATH
 from modules.util.strings.endpoints import MODELS_APPLY_ENDPOINT
 from modules.util.strings.endpoints import MODELS_AVAILABLE_ENDPOINT
@@ -20,11 +19,10 @@ from modules.util.strings.endpoints import MODELS_ENDPOINT
 from modules.util.trigger import checkTriggers
 from modules.util.util import printGeneric, printMenu, getStringMatchPercentage
 from modules.util.util import printError, printSeparator, clearWindow
-from modules.util.util import printSetting, printGreen, printRed, printDebug
-from modules.util.util import printCurrentSystemPrompt, checkEmptyString
+from modules.util.util import printGreen, printRed, printDebug
+from modules.util.util import checkEmptyString
 from modules.util.util import printInput, sendCurlCommand
-from modules.util.util import setOrPresetValue
-from modules.util.util import getRandomSeed, intVerifier, startTimer, endTimer
+from modules.util.util import getRandomSeed
 
 
 def getCommandMap():
@@ -37,8 +35,6 @@ def getCommandMap():
 
         commandConvo:           ["/convo",          "Settings",     "Change the conversation file."],
         commandModel:           ["/model",          "Settings",     "Change models."],
-        commandSystemPrompt:    ["/system",         "Settings",     "Change the system prompt."],
-
 
         commandCurl:            ["/curl",           "Tools",        "Send cURL commands to the server."],
         commandModelScanner:    ["/modelscanner",   "Tools",        "Scan for models on the server."]
@@ -184,9 +180,6 @@ def commandSettings():
 
     printGeneric("\nConversation file: " + getConversationName() + ".convo")
 
-    printGeneric("\nSystem prompt:")
-    printCurrentSystemPrompt(getConfig("system_prompt"), printGeneric, "")
-
     printGeneric("")
     return
 
@@ -242,17 +235,6 @@ def commandConvo():
             "\nKeeping current conversation"
             ": " + getConversationName() + "\n"
         )
-    return
-
-
-def commandSystemPrompt():
-    printGeneric("\nCurrent system prompt:")
-    printCurrentSystemPrompt(getConfig("system_prompt"), printGeneric, "\n")
-    printSeparator()
-    setConfig("system_prompt", printInput("Enter the new system prompt"))
-    printSeparator()
-    printGreen("\nSet system prompt to:")
-    printCurrentSystemPrompt(getConfig("system_prompt"), printGreen, "\n")
     return
 
 
@@ -396,10 +378,7 @@ def loadConfig():
 def handlePrompt(promptIn):
     if not checkCommands(promptIn):
         seed = getRandomSeed()
-        if not checkTriggers(promptIn, seed, getTextToTextResponseStreamed):
-            startTimer(0)
-            getTextToTextResponseStreamed(promptIn, seed)
-            endTimer(0)
+        checkTriggers(promptIn, seed)
     return
 
 

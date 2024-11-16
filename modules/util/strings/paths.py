@@ -9,9 +9,3 @@ CONVERSATIONS_FILE_PATH = "output/conversations/"
 CONFIGS_PATH = "config/"
 MODELS_CONFIG_FILE_NAME = "models.json"
 CONFIGS_FILE_NAME = "config.json"
-
-
-# test file paths
-TESTS_FILE_PATH = [
-    "tests/test.png"
-]

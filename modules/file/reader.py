@@ -8,10 +8,7 @@ from modules.util.util import createImageToTextRequest
 
 
 def getImageText(filePath):
-    return createImageToTextRequest(
-        "Accurately describe the provided image.",
-        filePath
-    )
+    return createImageToTextRequest("", filePath)
 
 
 def getFileExtension(filePath):
@@ -28,7 +25,6 @@ def getFileContents(filePath):
                 functionCall = entry
                 content = functionCall(filePath)
                 if content is not None and len(content) > 0:
-                    printDump("\n" + content)
                     return content
                 else:
                     printError("\nFile content is none or empty.")
@@ -65,6 +61,7 @@ def getFileMap():
     return {
         getImageText: [
             "jpg",
+            "jpeg",
             "png"
         ]
     }

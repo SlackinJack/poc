@@ -1,15 +1,12 @@
-import re
-
-
 from modules.file.operation import folderExists, getPathTree
 from modules.file.reader import getFileContents
 from modules.util.util import printDebug, printError, getStringMatchPercentage
 from modules.util.util import startTimer, endTimer, errorBlankEmptyText
 from modules.util.util import getFilePathFromPrompt, checkEmptyString
-from modules.util.util import formatArrayToString
+from modules.util.util import formatArrayToString, printResponse
 
 
-def checkTriggers(promptIn, seedIn, responseFuncIn):
+def checkTriggers(promptIn, seedIn):
     potentialTriggers = {}
     for key, value in getTriggerMap().items():
         for v in value:
@@ -19,9 +16,11 @@ def checkTriggers(promptIn, seedIn, responseFuncIn):
         triggerToCall = list(potentialTriggers)[0]
         printDebug("\nCalling trigger: " + str(triggerToCall))
         startTimer(0)
-        triggerToCall(responseFuncIn, promptIn, seedIn)
+        result = triggerToCall(promptIn, seedIn)
         endTimer(0)
-        return True
+        if result is not None:
+            printResponse("\n\n" + result + "\n")
+            return True
     elif len(potentialTriggers) > 1:
         triggerToCall = None
         for trigger, percentage in potentialTriggers.items():
@@ -32,14 +31,16 @@ def checkTriggers(promptIn, seedIn, responseFuncIn):
         if triggerToCall is not None:
             printDebug("\nCalling best-matched trigger: " + str(triggerToCall))
             startTimer(0)
-            triggerToCall(responseFuncIn, promptIn, seedIn)
+            result = triggerToCall(promptIn, seedIn)
             endTimer(0)
-            return True
+            if result is not None:
+                printResponse("\n\n" + result + "\n")
+                return True
     printDebug("\nNo triggers detected.")
     return False
 
 
-def triggerOpenFile(responderIn, promptIn, seedIn):
+def triggerOpenFile(promptIn, seedIn):
     promptWithoutFilePaths = promptIn
     filePathsInPrompt = getFilePathFromPrompt(promptIn)
     fileContents = []
@@ -62,11 +63,9 @@ def triggerOpenFile(responderIn, promptIn, seedIn):
                     ""
                 )
             filePaths = []
-            shouldUseFilePathsAsNames = False
             if folderExists(filePath):
                 pathTree = getPathTree(filePath)
                 filePaths = pathTree
-                shouldUseFilePathsAsNames = True
                 printDebug("\nOpening folder: " + filePath)
                 printDebug("\nFiles in folder:")
                 printDebug(formatArrayToString(pathTree, "\n"))
@@ -80,16 +79,7 @@ def triggerOpenFile(responderIn, promptIn, seedIn):
                 if fileContent is not None:
                     if checkEmptyString(fileContent):
                         fileContent = errorBlankEmptyText("file")
-                    if shouldUseFilePathsAsNames:
-                        fileContents.append(
-                            "\n``` File \"" + f + "\""
-                            "\n" + fileContent + "\n```\n"
-                        )
-                    else:
-                        fileContents.append(
-                            "\n``` File \"" + fileName + "\""
-                            "\n" + fileContent + "\n```\n"
-                        )
+                    fileContents.append(fileContent)
                 else:
                     printError("\nCannot get file contents.\n")
                     return None
@@ -98,12 +88,7 @@ def triggerOpenFile(responderIn, promptIn, seedIn):
                 "\nSkipped \"" + filePath + "\" because it did not "
                 "contain \"/\" - assuming invalid file path."
             )
-    return responderIn(
-        promptWithoutFilePaths,
-        seedIn=seedIn,
-        fileIn=fileContents,
-        shouldWriteDataToConvo=True
-    )
+    return fileContents[0]
 
 
 def getTriggerMap():

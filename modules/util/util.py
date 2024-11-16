@@ -1,7 +1,6 @@
 import base64
 import datetime
 import json
-import openai
 import random
 import re
 import readline  # unused, but fixes keyboard arrow keys for inputs
@@ -10,7 +9,6 @@ import time
 
 
 from difflib import SequenceMatcher
-from pynput import keyboard
 from termcolor import colored  # https://pypi.org/project/termcolor/
 
 
@@ -18,6 +16,17 @@ from modules.file.operation import fileExists
 from modules.util.configuration import getConfig
 from modules.util.strings.endpoints import MODELS_ENDPOINT
 from modules.util.strings.endpoints import TEXT_ENDPOINT
+
+
+__imagetotextSystemPrompt = (
+    "Accurately estimate the size (in centimeters), "
+    "and the weight (in grams), "
+    "of the main subject in the image."
+)
+
+
+__grammarString = """root ::= ("Size: " number "cm by " number "cm by " number "cm, weight: " number "g")
+number ::= [0-9]+["."]?[0-9]{1}"""
 
 
 __serverResponseTokens = [
@@ -35,26 +44,6 @@ def getServerResponseTokens():
 
 __tic = time.perf_counter()
 __tick = time.perf_counter()
-
-
-# TODO: Move this
-__imagetotextSystemPrompt = (
-    "You are a helpful ASSISTANT. "
-    "Use the provided image to answer USER's inquiry."
-)
-
-
-__shouldInterruptCurrentOutputProcess = True
-
-
-def setShouldInterruptCurrentOutputProcess(shouldInterrupt):
-    global __shouldInterruptCurrentOutputProcess
-    __shouldInterruptCurrentOutputProcess = shouldInterrupt
-    return
-
-
-def getShouldInterruptCurrentOutputProcess():
-    return __shouldInterruptCurrentOutputProcess
 
 
 ####################
@@ -184,14 +173,6 @@ def printMenu(titleIn, descriptionIn, choicesIn):
     return selection
 
 
-def printCurrentSystemPrompt(systemPromptIn, printer, space):
-    if len(systemPromptIn) > 0:
-        printer(systemPromptIn + space)
-    else:
-        printer("(Empty)" + space)
-    return
-
-
 ########################
 """ BEGIN STRING OPS """
 ########################
@@ -272,16 +253,6 @@ def formatArrayToString(arrayIn, separator):
     return separator.join(str(s) for s in arrayIn)
 
 
-def getGrammarString(listIn):
-    grammarStringBuilder = "root ::= ("
-    for item in listIn:
-        if len(grammarStringBuilder) > 10:
-            grammarStringBuilder += " | "
-        grammarStringBuilder += "\"" + item + "\""
-    grammarStringBuilder += ")"
-    return grammarStringBuilder
-
-
 def getRoleAndContentFromString(stringIn):
     if len(stringIn) > 0:
         i = 0
@@ -358,96 +329,6 @@ def getFilePathFromPrompt(stringIn):
 ########################
 """ BEGIN MISC UTILS """
 ########################
-
-
-def setOrDefault(
-    promptIn,
-    defaultValueIn,
-    verifierFuncIn,
-    keepDefaultValueStringIn,
-    setValueStringIn,
-    verifierErrorStringIn
-):
-    return setOr(
-        promptIn,
-        "leave empty for current",
-        defaultValueIn,
-        verifierFuncIn,
-        keepDefaultValueStringIn,
-        setValueStringIn,
-        verifierErrorStringIn
-    )
-
-
-def setOrPresetValue(
-    promptIn,
-    presetValueIn,
-    verifierFuncIn,
-    presetTypeStringIn,
-    presetValueStringIn,
-    verifierErrorStringIn
-):
-    return setOrPresetValueWithResult(
-        promptIn,
-        presetValueIn,
-        verifierFuncIn,
-        presetTypeStringIn,
-        presetValueStringIn,
-        "",
-        verifierErrorStringIn
-    )
-
-
-def setOrPresetValueWithResult(
-    promptIn,
-    presetValueIn,
-    verifierFuncIn,
-    presetTypeStringIn,
-    presetValueStringIn,
-    verifiedResultStringIn,
-    verifierErrorStringIn
-):
-    return setOr(
-        promptIn,
-        "leave empty for " + presetTypeStringIn,
-        presetValueIn,
-        verifierFuncIn,
-        presetValueStringIn,
-        verifiedResultStringIn,
-        verifierErrorStringIn
-    )
-
-
-def setOr(
-    messageIn,
-    leaveEmptyMessageIn,
-    valueIn,
-    verifierFuncIn,
-    noResultMessageIn,
-    verifiedResultMessageIn,
-    verifierErrorMessageIn
-):
-    printSeparator()
-    result = printInput(
-        messageIn + " (" + leaveEmptyMessageIn + " \"" + str(valueIn) + "\")"
-    )
-    printSeparator()
-    if len(result) == 0:
-        printRed("\n" + noResultMessageIn + ": " + str(valueIn) + "\n")
-        return valueIn
-    else:
-        verifiedResult = verifierFuncIn(result)
-        if verifiedResult[1]:
-            if len(verifiedResultMessageIn) > 0:
-                printGreen(
-                    "\n" + verifiedResultMessageIn + ""
-                    ": " + str(verifiedResult[0]) + "\n")
-            return verifiedResult[0]
-        else:
-            printError(
-                "\n" + verifierErrorMessageIn + ": " + str(valueIn) + "\n"
-            )
-            return valueIn
 
 
 def intVerifier(stringIn):
@@ -558,68 +439,6 @@ def sendCurlCommand(
     return
 
 
-def createTextRequest(dataIn):
-    # TODO: instruction and other supported functionality
-    # data                                                    = {}
-    # data["model"]                                           = modelIn
-    # data["messages"]                                        = messagesIn
-    # data["seed"]                                            = seedIn
-    # if temperatureIn is not None:   data["temperature"]     = temperatureIn
-    # if functionsIn is not None:     data["functions"]       = functionsIn
-    # if functionCallIn is not None:  data["function_call"]   = functionCallIn
-    # if grammarIn is not None:       data["grammar"]         = grammarIn
-
-    # language              str
-    # n                     int
-    # top_p                 float
-    # top_k                 float
-    # max_tokens            int
-    # echo                  bool
-    # batch                 int
-    # ignore_eos            bool
-    # repeat_penalty        int/float
-    # repeat_last_n         int/float
-    # tfz                   ?
-    # typical_p             ? (int/float)
-    # rope_freq_base        int/float
-    # rope_freq_scale       int/float
-    # use_fast_tokenizer    bool
-    # instruction           str
-    # input                 ? (str)
-    # stop                  ? (str)
-    # mode                  int
-    # backend               str
-    # model_base_name       str
-
-    result = sendCurlCommand(TEXT_ENDPOINT, dataIn=dataIn, returnResult=True)
-
-    if result is not None:
-        message = result["choices"][0]["message"]
-        if "functions" not in dataIn:
-            return cleanupServerResponseTokens(message["content"])
-        else:
-            try:
-                functionCall = message["function_call"]
-                if functionCall is not None and (
-                    functionCall["arguments"] is not None
-                ):
-                    # might be broken
-                    return json.loads(functionCall["arguments"])
-                else:
-                    printError(
-                        "\nNo function/arguments received from server.\n"
-                    )
-            except Exception as e:
-                printDebug("\nGetting function_call from message content.\n")
-                printDebug("\n" + str(e))
-                return json.loads(
-                    cleanupServerResponseTokens(message["content"])
-                )["arguments"]
-    else:
-        printError("\nNo response from the server.")
-    return
-
-
 def createImageToTextRequest(promptIn, filePathIn):
     if len(getConfig("default_image_to_text_model")) == 0:
         printError(
@@ -628,12 +447,12 @@ def createImageToTextRequest(promptIn, filePathIn):
         return None
 
     if fileExists(filePathIn):
+        fileExtension = filePathIn.split(".")
+        fileExtension = fileExtension[len(fileExtension) - 1]
+        systemMessageBody = {
+            "role": "USER"
+        }
         with open(filePathIn, "rb") as f:
-            fileExtension = filePathIn.split(".")
-            fileExtension = fileExtension[len(fileExtension) - 1]
-            systemMessageBody = {
-                "role": "USER"
-            }
             systemMessageBody["content"] = [
                 {
                     "type": "text",
@@ -647,18 +466,11 @@ def createImageToTextRequest(promptIn, filePathIn):
                     }
                 }
             ]
-            userMessageBody = {
-                "role": "USER",
-                "content": [
-                    {
-                        "type": "text", "text": promptIn
-                    }
-                ]
-            }
-            dataIn = {
-                "model": getConfig("default_image_to_text_model"),
-                "messages": [systemMessageBody, userMessageBody]
-            }
+        dataIn = {
+            "grammar": __grammarString,
+            "model": getConfig("default_image_to_text_model"),
+            "messages": [systemMessageBody],
+        }
 
         result = sendCurlCommand(
             TEXT_ENDPOINT,
@@ -695,20 +507,3 @@ def findModelFromServer(modelNameIn):
             if model["id"] == modelNameIn:
                 return True
     return False
-
-
-# Only used for streaming chat
-def createOpenAITextRequest(dataIn):
-    try:
-        openai.api_key = "sk-xxx"
-        openai.api_base = getConfig("address")
-        return openai.ChatCompletion.create(
-            model=dataIn["model"],
-            messages=dataIn["messages"],
-            seed=dataIn["seed"],
-            stream=True,
-            request_timeout=99999
-        )
-    except Exception as e:
-        printError("\nError: " + str(e))
-    return None
