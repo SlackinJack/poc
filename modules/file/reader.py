@@ -4,7 +4,7 @@ import subprocess
 
 from modules.file.operation import readFile
 from modules.util.util import printDump, printError
-from modules.util.util import formatArrayToString, createImageToTextRequest
+from modules.util.util import createImageToTextRequest
 
 
 def getImageText(filePath):

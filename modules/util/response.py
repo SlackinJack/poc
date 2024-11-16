@@ -2,39 +2,27 @@ import sys
 import time
 
 
-from modules.file.operation import appendFile
-from modules.file.reader import openLocalFile
-from modules.util.configuration import resetDefaultTextModel
-from modules.util.configuration import getConfig, setConfig
+from modules.util.configuration import getConfig
 from modules.util.conversation import getConversation, getConversationName
 from modules.util.conversation import writeConversation
 from modules.util.model import getChatModelFormat, getChatModelPromptOverride
-from modules.util.model import getModelByNameAndType, getSwitchableTextModels
-from modules.util.model import getSwitchableTextModelDescriptions
-from modules.util.strings.paths import OTHER_FILE_PATH
-from modules.util.strings.prompts import getFunctionActionsArrayDescription
-from modules.util.strings.prompts import getFunctionActionDescription
-from modules.util.strings.prompts import getFunctionActionInputDataDescription
-from modules.util.strings.prompts import getFunctionEditSystemPrompt
-from modules.util.strings.prompts import getFunctionSystemPrompt
 from modules.util.util import printError, printDebug, printResponse
 from modules.util.util import getPromptHistoryFromConversation, addToPrompt
 from modules.util.util import formatArrayToString, getServerResponseTokens
-from modules.util.util import printPromptHistory, printInfo, printRed
-from modules.util.util import createOpenAITextRequest, createTextRequest
-from modules.util.util import printGeneric, printDump, printYNQuestion
-from modules.util.util import printGreen, getDateTimeString
-from modules.util.util import createImageToTextRequest, getRandomSeed
-from modules.util.util import removeApostrophesFromFileInput
-from modules.util.util import createImageToVideoRequest, getGrammarString
-from modules.util.util import createTextToAudioRequest
-from modules.util.util import createAudioToTextRequest
-from modules.util.util import createImageEditRequest, createImageRequest
-from modules.util.web import getSourcesTextAsync, getSourcesResponse
+from modules.util.util import printPromptHistory
+from modules.util.util import createOpenAITextRequest
+from modules.util.util import createImageToTextRequest
 
 
 # Add custom stopwords here as necessary
 __stopwords = ["\n\n\n\n\n"] + getServerResponseTokens()
+
+
+# SYSTEM prompt for web results
+__strRespondUsingInformation = (
+    "For your next response, "
+    "use the following data:\n\n"
+)
 
 
 # SYSTEM prompt for input files, etc
@@ -63,20 +51,9 @@ def getTextToTextResponseStreamed(userPromptIn, seedIn, dataIn=[], fileIn=[], sh
         printError("\nChat output is disabled because the Text-to-Text model is not set.\n")
         return None
 
-    nextModel = getTextToTextResponseModel(userPromptIn, seedIn)
-
-    if nextModel is not None and nextModel is not getConfig("default_text_to_text_model"):
-        setConfig("default_text_to_text_model", nextModel)
-
     chatFormat = getChatModelFormat(getConfig("default_text_to_text_model"))
 
-    if getConfig("enable_chat_history_consideration"):
-        promptHistory = getPromptHistoryFromConversation(
-            getConversation(getConversationName()),
-            chatFormat
-        )
-    else:
-        promptHistory = []
+    promptHistory = []
 
     if len(dataIn) > 0:
         promptHistory = addToPrompt(
@@ -207,15 +184,6 @@ def getTextToTextResponseStreamed(userPromptIn, seedIn, dataIn=[], fileIn=[], sh
                 f"\n{charTime:0.3f}chars/sec ("
                 f"{responseLength}c/{totalTime:0.3f}s)"
             )
-
-        if getConfig("read_outputs"):
-            printInfo("\nGenerating Audio-to-Text...\n")
-            response = getTextToAudioResponse(assistantResponse, True)
-            if response is not None:
-                printDebug("\nPlaying Audio-to-Text...\n")
-                openLocalFile(response, False, "aplay -q -N")
-            else:
-                printError("\nCould not generate Audio-to-Text.\n")
 
         return assistantResponse
     else:

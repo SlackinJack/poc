@@ -3,12 +3,10 @@ import re
 
 from modules.file.operation import folderExists, getPathTree
 from modules.file.reader import getFileContents
-from modules.util.configuration import getConfig
 from modules.util.util import printDebug, printError, getStringMatchPercentage
 from modules.util.util import startTimer, endTimer, errorBlankEmptyText
 from modules.util.util import getFilePathFromPrompt, checkEmptyString
 from modules.util.util import formatArrayToString
-from modules.util.web import getYouTubeCaptions, getInfoFromWebsite
 
 
 def checkTriggers(promptIn, seedIn, responseFuncIn):
@@ -45,7 +43,6 @@ def triggerOpenFile(responderIn, promptIn, seedIn):
     promptWithoutFilePaths = promptIn
     filePathsInPrompt = getFilePathFromPrompt(promptIn)
     fileContents = []
-    detectedWebsites = []
     for filePath in filePathsInPrompt:
         if "/" in filePath:
             formattedFilePath = "'" + filePath + "'"
@@ -83,27 +80,6 @@ def triggerOpenFile(responderIn, promptIn, seedIn):
                 if fileContent is not None:
                     if checkEmptyString(fileContent):
                         fileContent = errorBlankEmptyText("file")
-                    else:
-                        if not getConfig("enable_internet"):
-                            printDebug(
-                                "\nInternet is disabled - "
-                                "skipping embedded website check."
-                            )
-                        else:
-                            # check for websites in file
-                            words = re.split(
-                                " |\n|\r|\)|\]|\}|\>",
-                                fileContent
-                            )
-                            for word in words:
-                                if word.startswith("http://") or (
-                                    word.startswith("https://")
-                                ):
-                                    detectedWebsites.append(word)
-                                    printDebug(
-                                        "\nFound website in file:"
-                                        " " + word + "\n"
-                                    )
                     if shouldUseFilePathsAsNames:
                         fileContents.append(
                             "\n``` File \"" + f + "\""
@@ -114,33 +90,6 @@ def triggerOpenFile(responderIn, promptIn, seedIn):
                             "\n``` File \"" + fileName + "\""
                             "\n" + fileContent + "\n```\n"
                         )
-                    if len(detectedWebsites) > 0:
-                        for website in detectedWebsites:
-                            youtubeResult = checkForYoutube(website)
-                            if youtubeResult is not None:
-                                websiteTitle = "YouTube Video"
-                                websiteText = youtubeResult
-                            else:
-                                web = getInfoFromWebsite(website, True, 0)
-                                websiteTitle = web[1]
-                                websiteText = web[2]
-                                if not checkEmptyString(websiteText):
-                                    printDebug(
-                                        "\nRetrieved text from " + website + ""
-                                        ": " + websiteText + "\n"
-                                    )
-                            if shouldUseFilePathsAsNames:
-                                fileContents.append(
-                                    "\n``` Website in file \"" + f + "\" "
-                                    "[" + websiteTitle + " (" + website + ")]"
-                                    "\n" + websiteText + "\n```\n"
-                                )
-                            else:
-                                fileContents.append(
-                                    "\n``` Website in file \"" + fileName + ""
-                                    "\" [" + websiteTitle + " (" + website + ""
-                                    ")]\n" + websiteText + "\n```\n"
-                                )
                 else:
                     printError("\nCannot get file contents.\n")
                     return None

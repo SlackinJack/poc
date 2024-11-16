@@ -6,7 +6,6 @@ from modules.util.command import commandExit, commandHelp, commandSettings
 from modules.util.conversation import setConversation, getConversationName
 from modules.util.util import printInput, printGeneric
 from modules.util.util import printSeparator, clearWindow, checkEmptyString
-from modules.util.util import getKeybindStopName, keyListener
 
 
 ###########################
@@ -38,7 +37,6 @@ def main():
     printSeparator()
     if not checkEmptyString(prompt):
         if prompt == "exit" or prompt == "0" or prompt.startswith("/exit"):
-            keyboardListener.stop()
             commandExit()
             return
         else:

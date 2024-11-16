@@ -1,43 +1,30 @@
 import json
 import os
-import time
 
 
-from threading import Thread
-
-
-from modules.file.operation import readFile, deleteFile, fileExists
-from modules.file.operation import deleteFilesWithPrefix
+from modules.file.operation import readFile, deleteFile
 from modules.util.configuration import setConfigurationFileName
 from modules.util.configuration import getConfigurationFileName
 from modules.util.configuration import loadConfiguration, setDefaultTextModel
 from modules.util.configuration import loadModelConfiguration
 from modules.util.configuration import setConfig, getConfig
 from modules.util.conversation import getConversationName, setConversation
-from modules.util.conversation import writeConversation
 from modules.util.model import getModelFromConfiguration
 from modules.util.model import getModelByNameAndType, getModelsWithType
-from modules.util.model import getModelByName, modelScanner, getModelTypes
-from modules.util.response import getTextToTextResponseModel
+from modules.util.model import modelScanner, getModelTypes
 from modules.util.response import getTextToTextResponseStreamed
-from modules.util.response import getImageToTextResponse
 from modules.util.strings.paths import CONFIGS_PATH, CONVERSATIONS_FILE_PATH
-from modules.util.strings.paths import TESTS_FILE_PATH
 from modules.util.strings.endpoints import MODELS_APPLY_ENDPOINT
 from modules.util.strings.endpoints import MODELS_AVAILABLE_ENDPOINT
 from modules.util.strings.endpoints import MODELS_ENDPOINT
-from modules.util.trigger import triggerOpenFile
 from modules.util.trigger import checkTriggers
 from modules.util.util import printGeneric, printMenu, getStringMatchPercentage
 from modules.util.util import printError, printSeparator, clearWindow
 from modules.util.util import printSetting, printGreen, printRed, printDebug
 from modules.util.util import printCurrentSystemPrompt, checkEmptyString
 from modules.util.util import printInput, sendCurlCommand
-from modules.util.util import toggleSetting, printYNQuestion, setOrPresetValue
+from modules.util.util import setOrPresetValue
 from modules.util.util import getRandomSeed, intVerifier, startTimer, endTimer
-from modules.util.util import printResponse, setOrDefault
-from modules.util.util import getFilePathFromPrompt, getKeybindStopName
-from modules.util.util import printInfo
 
 
 def getCommandMap():
@@ -187,18 +174,6 @@ def commandSettings():
     printGeneric("\nConfiguration File:")
     printGeneric(getConfigurationFileName())
 
-    printGeneric("\nSettings:")
-    printSetting(getConfig("enable_functions"), "Functions")
-    printSetting(getConfig("enable_internet"), "Auto Internet Search")
-    printSetting(
-        getConfig("enable_automatic_model_switching"),
-        "Automatically Switch Models"
-    )
-    printSetting(
-        getConfig("enable_chat_history_consideration"),
-        "Consider Chat History"
-    )
-
     printGeneric("\nModels:")
     for modelType, modelName in getModelTypes().items():
         printGeneric(
@@ -229,14 +204,6 @@ def commandExit():
                 printDebug(
                     "\nDeleted empty conversation file: " + conversation
                 )
-
-    if getConfig("delete_output_files_exit"):
-        foldersToClean = [AUDIO_FILE_PATH, IMAGE_FILE_PATH]
-        for folder in foldersToClean:
-            for outputFile in os.listdir(folder):
-                if not outputFile == ".keep":
-                    deleteFile(folder + outputFile)
-                    printDebug("\nDeleted output file: " + folder + outputFile)
 
     printGeneric("")
     return
@@ -428,33 +395,10 @@ def loadConfig():
 
 def handlePrompt(promptIn):
     if not checkCommands(promptIn):
-        if getConfig("allow_setting_text_seeds"):
-            printGeneric("")
-            seed = setOrPresetValue(
-                "Enter a seed (eg. 1234567890)",
-                getRandomSeed(),
-                intVerifier,
-                "random",
-                "Using a random seed",
-                "The seed you entered is invalid - using a random seed!"
-            )
-        else:
-            printDebug("\nUsing random text seed.")
-            seed = getRandomSeed()
+        seed = getRandomSeed()
         if not checkTriggers(promptIn, seed, getTextToTextResponseStreamed):
             startTimer(0)
-            try:
-                if getConfig("enable_functions"):
-                    getTextToTextResponseFunctions(promptIn, seed)
-                else:
-                    printInfo(
-                        "\nFunctions are disabled - "
-                        "using chat completion only."
-                    )
-                    getTextToTextResponseStreamed(promptIn, seed)
-            except KeyboardInterrupt:
-                printGeneric("")
-                return
+            getTextToTextResponseStreamed(promptIn, seed)
             endTimer(0)
     return
 

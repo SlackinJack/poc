@@ -14,9 +14,9 @@ from pynput import keyboard
 from termcolor import colored  # https://pypi.org/project/termcolor/
 
 
-from modules.file.operation import getFileFromURL, writeFileBinary, fileExists
+from modules.file.operation import fileExists
 from modules.util.configuration import getConfig
-from modules.util.strings.endpoints import IMAGE_ENDPOINT, MODELS_ENDPOINT
+from modules.util.strings.endpoints import MODELS_ENDPOINT
 from modules.util.strings.endpoints import TEXT_ENDPOINT
 
 
@@ -140,19 +140,16 @@ def clearWindow():
 
 
 def printYNQuestion(messageIn):
-    if getConfig("always_yes_to_yn"):
+    printSeparator()
+    result = printInput(messageIn + " ([Y]es/[N]o/[E]xit)")
+    printSeparator()
+    result = result.lower()
+    if "y" in result:
         return 0
+    elif "e" in result:
+        return 2
     else:
-        printSeparator()
-        result = printInput(messageIn + " ([Y]es/[N]o/[E]xit)")
-        printSeparator()
-        result = result.lower()
-        if "y" in result:
-            return 0
-        elif "e" in result:
-            return 2
-        else:
-            return 1
+        return 1
 
 
 def printMenu(titleIn, descriptionIn, choicesIn):
@@ -465,6 +462,10 @@ def floatVerifier(stringIn):
         return [float(stringIn), True]
     except:
         return [stringIn, False]
+
+
+def getDateTimeString():
+    return datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
 
 def startTimer(timerNumber):
