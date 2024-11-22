@@ -1,3 +1,4 @@
 pynput
 openai==0.28.0
+pillow
 termcolor

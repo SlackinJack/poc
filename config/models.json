@@ -1,5 +1,8 @@
 {
     "image_to_text_llava-13b": {
         "model_type": "image_to_text"
+    },
+    "image_to_text_llava-34b": {
+        "model_type": "image_to_text"
     }
 }

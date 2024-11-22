@@ -9,24 +9,32 @@ import time
 
 
 from difflib import SequenceMatcher
+from PIL import Image
 from termcolor import colored  # https://pypi.org/project/termcolor/
 
 
-from modules.file.operation import fileExists
+from modules.file.operation import fileExists, deleteFile
 from modules.util.configuration import getConfig
 from modules.util.strings.endpoints import MODELS_ENDPOINT
 from modules.util.strings.endpoints import TEXT_ENDPOINT
 
 
-__imagetotextSystemPrompt = (
-    "Accurately estimate the size (in centimeters), "
-    "and the weight (in grams), "
-    "of the main subject in the image."
+def getTextToTextSystemPrompt(objectIn):
+    return ("What is the average size (in centimeters), as well as the average weight (in grams (g)), of the following object: " + objectIn)
+
+
+__imagetotextSystemPromptNew = (
+    "What is the single main subject, and the main subject only, in the given image?"
 )
 
 
-__grammarString = """root ::= ("Size: " number "cm by " number "cm by " number "cm, weight: " number "g")
-number ::= [0-9]+["."]?[0-9]{1}"""
+__grammarStringNew = """root ::= ("The single main subject in the given image is " string ".")
+string ::= [a-zA-Z ]*"""
+
+
+__grammarString = """root ::= ("Size: " number "cm by " number "cm by " number "cm, weight: " weight "g")
+number ::= [0-9]+["."]?[0-9]{1}
+weight ::= [0-9]+["."]?[0-9]{1}[mk]{0,1}"""
 
 
 __serverResponseTokens = [
@@ -447,8 +455,22 @@ def createImageToTextRequest(promptIn, filePathIn):
         return None
 
     if fileExists(filePathIn):
+        convertExt = ["jpg", "jpeg"]
         fileExtension = filePathIn.split(".")
         fileExtension = fileExtension[len(fileExtension) - 1]
+        converted = False
+        if fileExtension in convertExt:
+            printDebug("Converting image to PNG.")
+            newFilePath = filePathIn.replace(fileExtension,"png")
+            im = Image.open(filePathIn)
+            width, height = im.size
+            factor = width / 512
+            new_height = height / factor
+            im = im.resize((512, int(new_height)), Image.ANTIALIAS)
+            im.save(newFilePath, optimize=True, quality=75)
+            filePathIn = filePathIn.replace(fileExtension,"png")
+            fileExtension = "png"
+            converted = True
         systemMessageBody = {
             "role": "USER"
         }
@@ -456,7 +478,7 @@ def createImageToTextRequest(promptIn, filePathIn):
             systemMessageBody["content"] = [
                 {
                     "type": "text",
-                    "text": __imagetotextSystemPrompt
+                    "text": __imagetotextSystemPromptNew
                 },
                 {
                     "type": "image_url",
@@ -466,8 +488,11 @@ def createImageToTextRequest(promptIn, filePathIn):
                     }
                 }
             ]
+        if converted:
+            printDebug("Delete converted PNG image.")
+            deleteFile(filePathIn)
         dataIn = {
-            "grammar": __grammarString,
+            "grammar": __grammarStringNew,
             "model": getConfig("default_image_to_text_model"),
             "messages": [systemMessageBody],
         }
@@ -481,9 +506,32 @@ def createImageToTextRequest(promptIn, filePathIn):
             message = result["choices"][0]["message"]["content"]
             message = cleanupString(message)
             message = cleanupServerResponseTokens(message)
-            return message
+            message = message.replace("The single main subject in the given image is ", "")
+            message = message.replace(".", "")
+            printDebug("Object: " + message)
+            
+            if ' ' in message:
+                message = message.replace(" ","_")
+            systemMessageBody = {"role":"USER","content":getTextToTextSystemPrompt(message)}
+            dataIn = {
+                "grammar": __grammarString,
+                "model": "text_to_text_nous-13b",
+                "messages": [systemMessageBody],
+            }
+            result = sendCurlCommand(
+                TEXT_ENDPOINT,
+                dataIn=dataIn,
+                returnResult=True
+            )
+            if result is not None:
+                message = result["choices"][0]["message"]["content"]
+                message = cleanupString(message)
+                message = cleanupServerResponseTokens(message)
+                return message
+            else:
+                printError("\nNo text response from server!\n")
         else:
-            printError("\nNo message from server!\n")
+            printError("\nNo image response from server!\n")
     else:
         printError("\nFile does not exist!\n")
     return None
