@@ -9,4 +9,4 @@ Models:
 
 ![Screenshot 2](/!gallery/chair.png?raw=true "Screenshot #2")
 
-https://github.com/SlackinJack/poc/raw/refs/heads/main/!gallery/screencapture.mp4
+![Screencapture 1](https://github.com/SlackinJack/poc/raw/refs/heads/main/!gallery/screencapture.mp4 "Screencapture #1")
